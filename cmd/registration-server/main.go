@@ -15,7 +15,7 @@ type HealthResponse struct {
 func healthHandler(w http.ResponseWriter, r *http.Request) { //function must have w http.ResponseWrite and r *http.Request
 	w.Header().Set("Content-Type", "application/json") // Set the Header - Content type to application/json
 
-	w.WriteHeader(http.StatusOK) // Set the status code
+	// w.WriteHeader(http.StatusOK) // Set the status code
 
 	response := HealthResponse{ // Initialise response
 		Status:    "OK",
