@@ -38,7 +38,7 @@ func FormatCheck(password string) bool {
 		if unicode.IsUpper(r) {
 			hasUpper = true
 		}
-		if unicode.IsNumber(r) {
+		if unicode.IsDigit(r) {
 			hasNum = true
 		}
 		if unicode.IsPunct(r) || unicode.IsSymbol(r) {
