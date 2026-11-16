@@ -51,54 +51,113 @@ Prospect status: pending → verified → active / expired / locked
 
 ## Technical Design
 ### List of endpoints:
-- POST /signup
-- POST /signin
-- POST /resendotp
-- POST /verifyotp
-- GET /userprofile
+All endpoints accept and return JSON unless stated otherwise. The profile endpoint
+requires a valid access token in the `Authorization` header.
+
+| Method | Path | Authentication | Request body | Success response | Description |
+| --- | --- | --- | --- | --- | --- |
+| `POST` | `/signup` | None | `{ "email": "string", "password": "string" }` | `201 Created` | Create a pending registration and send an OTP. |
+| `POST` | `/signin` | None | `{ "email": "string", "password": "string" }` | `200 OK` | Authenticate an active user and return an access token. |
+| `POST` | `/otp/resend` | None | `{ "email": "string" }` | `202 Accepted` | Invalidate the previous OTP and send a new one. |
+| `POST` | `/otp/verify` | None | `{ "email": "string", "otp": "string" }` | `200 OK` | Verify the OTP and activate the account. |
+| `GET` | `/userprofile` | Bearer token | None | `200 OK` | Return the authenticated user's profile. |
 
 ### Database Schema:
 Will be added later
 
 ## POC Flows
 
-#### Sign up POC Flow
-    1) User fills in email + password on Frontend and clicks Submit.
-    2) Frontend sends POST /signup to Registration Server (HTTP).
-    3) Registration Server calls Credential Service via gRPC to securely hash the password.
-    4) Credential Service hashes the password and returns the hash via gRPC.
-    5) Registration Server saves the pending registration with the hash into Postgres.
-    6) Registration Server triggers the email workflow (generates/sends OTP).
-    7) Registration Server returns 201 Created / success response to Frontend.
-    8) Frontend displays the "Enter your 6-digit OTP" 
-#### OTP POC Flow
-    1) User fills in OTP and clicks Submit
-    2) Frontend sends POST /verifyotp to Registration Service.
-    3) Registration Service verify the OTP:
-        a) If status is locked or expired: return 400 Bad Request.
-        b) If OTP matches and is within 15 min:
-            ▪ Transition status: pending → verified → active.
-            ▪  Return 200 OK (with success message).
-        c) If OTP is incorrect or expired:
-                • Increment attempts.
-                •  If attempts >= 5: set status to locked.
-                • Return 400 Bad Request (e.g., "Invalid code. 3 attempts remaining" or "Account locked").
-#### Sign in POC FLow
-    1) User fills in email + password and clicks Submit.
-    2) Frontend sends POST /signin to Registration Server.
-    3) Registration server checks if the account is active (reject if status is pending / locked / expired)
-    4) Registration Server calls Credential Server via gRPC.
-    5) Credential Server compares and verifies password and hash
-    6) Registration Server creates a signed JWT
-    7) Registration Server returns 200 OK and JWT to Frontend.
-    8) Frontend saves JWT to LocalStorage
-    9) Frontend redirects to profile page
+#### Sign up POC flow
 
-#### Get profile POC FLow
-    1) Frontend redirects to profile page after signing in
-    2) Frontend sends a GET /getprofile request with authorisation header.
-    3) Registration Server's Auth Middleware intercepts the request::
-        a) Validate JWT signature and expiry.
-        b) Extracts userID/email from claims and attaches it to Request
-    4) Handler get user profile from database
-    5) Registration Server returns user information and 200 OK response to Frontend.
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend
+    participant RS as Registration Server
+    participant CS as Credential Service
+    participant DB as Postgres
+    participant TW as Temporal Worker
+
+    User->>FE: Enter email and password
+    FE->>RS: POST /signup
+    RS->>CS: Hash password (gRPC)
+    CS->>DB: Save pending registration and hash
+    RS->>TW: Start email workflow
+    TW-->>User: Send 6-digit OTP
+    RS-->>FE: 201 Created
+    FE-->>User: Display OTP entry screen
+```
+
+#### OTP verification POC flow
+
+```mermaid
+flowchart TD
+    A[User enters OTP] --> B[POST /otp/verify]
+    B --> C{Registration status}
+    C -->|Locked or expired| D[Return 400 Bad Request]
+    C -->|Active OTP within 15 minutes| E[Transition pending → verified → active]
+    E --> F[Return 200 OK]
+    C -->|Incorrect or expired OTP| G[Increment attempts]
+    G --> H{Attempts >= 5?}
+    H -->|Yes| I[Set status to locked]
+    I --> J[Return 400 Bad Request: Account locked]
+    H -->|No| K[Return 400 Bad Request: Invalid code and attempts remaining]
+```
+
+#### Resend OTP POC flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend
+    participant RS as Registration Server
+    participant TW as Temporal Worker
+
+    User->>FE: Request a new OTP
+    FE->>RS: POST /otp/resend
+    RS->>RS: Invalidate previous OTP
+    RS->>TW: Generate and send a new OTP
+    RS-->>FE: 202 Accepted
+```
+
+#### Sign in POC flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend
+    participant RS as Registration Server
+    participant CS as Credential Service
+    participant DB as Postgres
+
+    User->>FE: Enter email and password
+    FE->>RS: POST /signin
+    RS->>CS: Call service via gRPC
+    CS->>DB: Verify password and hash (gRPC)
+    CS-->>RS: Password result
+    RS->>RS: Create signed JWT
+    RS-->>FE: 200 OK with JWT
+    FE->>FE: Store JWT
+    FE-->>User: Redirect to profile
+```
+
+#### Get profile POC flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant FE as Frontend
+    participant RS as Registration Server
+    participant CS as Credential Service
+    participant DB as Postgres
+
+
+    User->>FE: Open profile page
+    FE->>RS: GET /userprofile with Authorization header
+    RS->>RS: Validate JWT signature and expiry
+    RS->>RS: Extract user ID/email from claims
+    RS->>CS: Call credential service
+    CS->>DB: Query user profile
+    DB-->>RS: Return profile
+    RS-->>FE: 200 OK with user profile
+```
