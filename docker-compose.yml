@@ -5,11 +5,53 @@ services:
       dockerfile: deployments/registration.Dockerfile
     ports:
       - "8080:8080"
-    
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      CONNECTION_STRING: ${CONNECTION_STRING}
+    develop:
+      watch:
+        # Sync Go source files so Air recompiles automatically
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - tmp/
+            - vendor/
+        # Rebuild image when dependencies change
+        - action: rebuild
+          path: ./go.mod
+        # Restart on environment file updates
+        - action: sync+restart
+          path: ./.env
+          target: /app/.env
   credential:
     build:
       context: .
       dockerfile: deployments/credential.Dockerfile
+    ports:
+      - "50051:50051" 
+    env_file:
+      - .env
+    environment:
+      CONNECTION_STRING: ${CONNECTION_STRING}
+    develop:
+      watch:
+        # Sync Go source files so Air recompiles automatically
+        - action: sync
+          path: .
+          target: /app
+          ignore:
+            - tmp/
+            - vendor/
+        # Rebuild image when dependencies change
+        - action: rebuild
+          path: ./go.mod
+        # Restart on environment file updates
+        - action: sync+restart
+          path: ./.env
+          target: /app/.env
 
   db:
     image: postgres:17
