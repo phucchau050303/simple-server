@@ -7,6 +7,15 @@ definitions:
       timestamp:
         type: string
     type: object
+  main.SignUpRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: password123!
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
@@ -24,4 +33,36 @@ paths:
           schema:
             $ref: '#/definitions/main.HealthResponse'
       summary: Health check
+  /signup:
+    post:
+      consumes:
+      - application/json
+      description: Register new user via gRPC
+      parameters:
+      - description: Registration Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/main.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: User Sign Up
+      tags:
+      - auth
 swagger: "2.0"
