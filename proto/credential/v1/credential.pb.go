@@ -133,6 +133,118 @@ func (x *SignInResponse) GetMessage() string {
 	return ""
 }
 
+type SignUpRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	Password      string                 `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignUpRequest) Reset() {
+	*x = SignUpRequest{}
+	mi := &file_proto_credential_v1_credential_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignUpRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignUpRequest) ProtoMessage() {}
+
+func (x *SignUpRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_credential_v1_credential_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignUpRequest.ProtoReflect.Descriptor instead.
+func (*SignUpRequest) Descriptor() ([]byte, []int) {
+	return file_proto_credential_v1_credential_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SignUpRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *SignUpRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type SignUpResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IsValid       bool                   `protobuf:"varint,1,opt,name=is_valid,json=isValid,proto3" json:"is_valid,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SignUpResponse) Reset() {
+	*x = SignUpResponse{}
+	mi := &file_proto_credential_v1_credential_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SignUpResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SignUpResponse) ProtoMessage() {}
+
+func (x *SignUpResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_credential_v1_credential_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SignUpResponse.ProtoReflect.Descriptor instead.
+func (*SignUpResponse) Descriptor() ([]byte, []int) {
+	return file_proto_credential_v1_credential_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SignUpResponse) GetIsValid() bool {
+	if x != nil {
+		return x.IsValid
+	}
+	return false
+}
+
+func (x *SignUpResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *SignUpResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_proto_credential_v1_credential_proto protoreflect.FileDescriptor
 
 const file_proto_credential_v1_credential_proto_rawDesc = "" +
@@ -144,9 +256,17 @@ const file_proto_credential_v1_credential_proto_rawDesc = "" +
 	"\x0eSignInResponse\x12\x19\n" +
 	"\bis_valid\x18\x01 \x01(\bR\aisValid\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage2Z\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"A\n" +
+	"\rSignUpRequest\x12\x14\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"^\n" +
+	"\x0eSignUpResponse\x12\x19\n" +
+	"\bis_valid\x18\x01 \x01(\bR\aisValid\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage2\xa1\x01\n" +
 	"\x11CredentialService\x12E\n" +
-	"\x06SignIn\x12\x1c.credential.v1.SignInRequest\x1a\x1d.credential.v1.SignInResponseB0Z.simple-webser/proto/credential/v1;credentialv1b\x06proto3"
+	"\x06SignIn\x12\x1c.credential.v1.SignInRequest\x1a\x1d.credential.v1.SignInResponse\x12E\n" +
+	"\x06SignUp\x12\x1c.credential.v1.SignUpRequest\x1a\x1d.credential.v1.SignUpResponseB0Z.simple-webser/proto/credential/v1;credentialv1b\x06proto3"
 
 var (
 	file_proto_credential_v1_credential_proto_rawDescOnce sync.Once
@@ -160,16 +280,20 @@ func file_proto_credential_v1_credential_proto_rawDescGZIP() []byte {
 	return file_proto_credential_v1_credential_proto_rawDescData
 }
 
-var file_proto_credential_v1_credential_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_credential_v1_credential_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_proto_credential_v1_credential_proto_goTypes = []any{
 	(*SignInRequest)(nil),  // 0: credential.v1.SignInRequest
 	(*SignInResponse)(nil), // 1: credential.v1.SignInResponse
+	(*SignUpRequest)(nil),  // 2: credential.v1.SignUpRequest
+	(*SignUpResponse)(nil), // 3: credential.v1.SignUpResponse
 }
 var file_proto_credential_v1_credential_proto_depIdxs = []int32{
 	0, // 0: credential.v1.CredentialService.SignIn:input_type -> credential.v1.SignInRequest
-	1, // 1: credential.v1.CredentialService.SignIn:output_type -> credential.v1.SignInResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: credential.v1.CredentialService.SignUp:input_type -> credential.v1.SignUpRequest
+	1, // 2: credential.v1.CredentialService.SignIn:output_type -> credential.v1.SignInResponse
+	3, // 3: credential.v1.CredentialService.SignUp:output_type -> credential.v1.SignUpResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -186,7 +310,7 @@ func file_proto_credential_v1_credential_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_credential_v1_credential_proto_rawDesc), len(file_proto_credential_v1_credential_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
