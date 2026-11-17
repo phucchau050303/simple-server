@@ -62,30 +62,36 @@ func healthHandler(w http.ResponseWriter, r *http.Request) { //function must hav
 // @Router       /signup [post]
 func signUpHandler(credentialClient credentialv1.CredentialServiceClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/json") //set content type in header
 
+		//check if right method is sent
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
+		//initialise request body struct
 		var reqBody SignUpRequest
 
+		//decode request body from front end
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
 
+		//call Sign Up from credential service
 		grpcResponse, err := credentialClient.SignUp(r.Context(), &credentialv1.SignUpRequest{
 			Email:    reqBody.Email,
 			Password: reqBody.Password,
 		})
 
+		//return error if grpc call fails
 		if err != nil {
 			http.Error(w, fmt.Sprintf("gRPC call failed, internal service error: %v", err), http.StatusInternalServerError)
 			return
 		}
 
+		//return error if response is invalid
 		if !grpcResponse.GetIsValid() {
 			http.Error(w, grpcResponse.GetMessage(), http.StatusBadRequest)
 			return
@@ -113,26 +119,31 @@ func main() {
 	router.HandleFunc("GET /health", healthHandler)
 
 	router.HandleFunc("POST /signin", func(w http.ResponseWriter, r *http.Request) {
+		//check if the right method is sent
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
+		//declare and initialise request body struct
 		var reqBody struct {
 			Email    string `json:"email"`
 			Password string `json:"password"`
 		}
 
+		//decode the request body from front end and check if it is valid
 		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 			return
 		}
 
+		//call SignIn funciton from credential service
 		grpcResponse, err := credentialClient.SignIn(r.Context(), &credentialv1.SignInRequest{
 			Email:    reqBody.Email,
 			Password: reqBody.Password,
 		})
 
+		// if error is thrown, return error
 		if err != nil {
 			log.Printf("gRPC call failed: %v", err)
 			http.Error(w, fmt.Sprintf("internal service error: %v", err),
@@ -140,17 +151,21 @@ func main() {
 			return
 		}
 
+		//if response is invalid, return 401 unauthorised
 		if !grpcResponse.GetIsValid() {
 			http.Error(w, grpcResponse.GetMessage(), http.StatusUnauthorized)
 			return
 		}
 
+		//set content type of the header
 		w.Header().Set("Content-Type", "application/json")
+		//set 200 OK status
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok", "message":"succesfully logged in"}`))
 	})
 
 	router.HandleFunc("POST /signup", signUpHandler(credentialClient))
+
 	log.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

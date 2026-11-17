@@ -80,7 +80,8 @@ sequenceDiagram
 
     User->>FE: Enter email and password
     FE->>RS: POST /signup
-    RS->>CS: Hash password (gRPC)
+    RS->>CS: Call credential service
+    CS->>CS: Hash password
     CS->>DB: Save pending registration and hash
     RS->>TW: Start email workflow
     TW-->>User: Send 6-digit OTP

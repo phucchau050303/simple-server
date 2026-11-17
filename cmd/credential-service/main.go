@@ -70,6 +70,11 @@ func (s *server) SignUp(ctx context.Context, req *credentialv1.SignUpRequest) (*
 	password := req.Password
 	var id int
 
+	//check if email or password is null or not
+	if email == "" || password == "" {
+		return nil, fmt.Errorf("Email and Password cannot be null!")
+	}
+
 	//query to check if email exist
 	err := s.db.QueryRowContext(ctx, "SELECT id FROM users WHERE email = $1", email).Scan(&id)
 	if err == nil {
