@@ -25,6 +25,11 @@ type HealthResponse struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
+type SignUpRequest struct {
+	Email    string `json:"email" example:"user@example.com"`
+	Password string `json:"password" example:"password123!"`
+}
+
 // healthHandler godoc
 // @Summary Health check
 // @Produce json
@@ -44,6 +49,53 @@ func healthHandler(w http.ResponseWriter, r *http.Request) { //function must hav
 
 }
 
+// SignUpHandler godoc
+// @Summary      User Sign Up
+// @Description  Register new user via gRPC
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body SignUpRequest true "Registration Credentials"
+// @Success      201 {object} map[string]string
+// @Failure      400 {string} string "Bad Request"
+// @Failure      500 {string} string "Internal Server Error"
+// @Router       /signup [post]
+func signUpHandler(credentialClient credentialv1.CredentialServiceClient) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var reqBody SignUpRequest
+
+		if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		grpcResponse, err := credentialClient.SignUp(r.Context(), &credentialv1.SignUpRequest{
+			Email:    reqBody.Email,
+			Password: reqBody.Password,
+		})
+
+		if err != nil {
+			http.Error(w, fmt.Sprintf("gRPC call failed, internal service error: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		if !grpcResponse.GetIsValid() {
+			http.Error(w, grpcResponse.GetMessage(), http.StatusBadRequest)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(`{"status": "created", "message":" user created succesfully"}`))
+	}
+}
+
 func main() {
 	router := http.NewServeMux()
 	conn, err := grpc.NewClient("credential:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -59,16 +111,7 @@ func main() {
 	))
 
 	router.HandleFunc("GET /health", healthHandler)
-	// SignInHandler godoc
-	// @Summary      User Sign In
-	// @Description  Authenticate user with email and password via gRPC
-	// @Tags         auth
-	// @Accept       json
-	// @Produce      json
-	// @Param        request body reqBody true "Login Credentials"
-	// @Success      200 {object} map[string]string
-	// @Failure      400,401,500 {string} string
-	// @Router /signin [post]
+
 	router.HandleFunc("POST /signin", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -91,7 +134,7 @@ func main() {
 		})
 
 		if err != nil {
-			log.Printf("❌ gRPC call failed: %v", err)
+			log.Printf("gRPC call failed: %v", err)
 			http.Error(w, fmt.Sprintf("internal service error: %v", err),
 				http.StatusInternalServerError)
 			return
@@ -106,6 +149,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status": "ok", "message":"succesfully logged in"}`))
 	})
+
+	router.HandleFunc("POST /signup", signUpHandler(credentialClient))
 	log.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
