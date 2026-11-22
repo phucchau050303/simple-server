@@ -32,13 +32,33 @@ func main() {
 
 	credentialClient := credentialv1.NewCredentialServiceClient(conn)
 
+	registrationService := registration.NewService(credentialClient)
+
 	router.Handle("GET /swagger/", httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
 	))
 
+	// healthHandler godoc
+	// @Summary Health check
+	// @Produce json
+	// @Success 200 {object} HealthResponse
+	// @Router /health [get]
 	router.HandleFunc("GET /health", registration.HealthHandler)
-	router.HandleFunc("POST /signin", registration.SignInHandler(credentialClient))
-	router.HandleFunc("POST /signup", registration.SignUpHandler(credentialClient))
+
+	router.HandleFunc("POST /signin", registration.SignInHandler(registrationService))
+
+	// SignUpHandler godoc
+	// @Summary      User Sign Up
+	// @Description  Register new user via gRPC
+	// @Tags         auth
+	// @Accept       json
+	// @Produce      json
+	// @Param        request body SignUpRequest true "Registration Credentials"
+	// @Success      201 {object} map[string]string
+	// @Failure      400 {string} string "Bad Request"
+	// @Failure      500 {string} string "Internal Server Error"
+	// @Router       /signup [post]
+	router.HandleFunc("POST /signup", registration.SignUpHandler(registrationService))
 
 	log.Println("Server is running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", registration.RequestIDMiddleware(router)))

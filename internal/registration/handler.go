@@ -3,7 +3,6 @@ package registration
 import (
 	"encoding/json"
 	"net/http"
-	credentialv1 "simple-webser/proto/credential/v1"
 	"time"
 )
 
@@ -17,11 +16,6 @@ type SignUpRequest struct {
 	Password string `json:"password" example:"password123!"`
 }
 
-// healthHandler godoc
-// @Summary Health check
-// @Produce json
-// @Success 200 {object} HealthResponse
-// @Router /health [get]
 func HealthHandler(w http.ResponseWriter, r *http.Request) { //function must have w http.ResponseWrite and r *http.Request
 	w.Header().Set("Content-Type", "application/json") // Set the Header - Content type to application/json
 
@@ -36,18 +30,7 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) { //function must hav
 
 }
 
-// SignUpHandler godoc
-// @Summary      User Sign Up
-// @Description  Register new user via gRPC
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        request body SignUpRequest true "Registration Credentials"
-// @Success      201 {object} map[string]string
-// @Failure      400 {string} string "Bad Request"
-// @Failure      500 {string} string "Internal Server Error"
-// @Router       /signup [post]
-func SignUpHandler(credentialClient credentialv1.CredentialServiceClient) http.HandlerFunc {
+func SignUpHandler(registrationService CredentialService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestLog := RequestLogger(r)
 		w.Header().Set("Content-Type", "application/json") //set content type in header
@@ -83,10 +66,11 @@ func SignUpHandler(credentialClient credentialv1.CredentialServiceClient) http.H
 		//log.Logger(hthtp server receive smth)
 		//call Sign Up from credential service
 		requestLog.Println("Calling SignUp service through gRPC to process and insert data")
-		grpcResponse, err := credentialClient.SignUp(r.Context(), &credentialv1.SignUpRequest{
-			Email:    reqBody.Email,
-			Password: reqBody.Password,
-		})
+		grpcResponse, err := registrationService.SignUp(
+			r.Context(),
+			reqBody.Email,
+			reqBody.Password,
+		)
 
 		//return error if grpc call fails
 		if err != nil {
@@ -118,7 +102,7 @@ func SignUpHandler(credentialClient credentialv1.CredentialServiceClient) http.H
 	}
 }
 
-func SignInHandler(credentialClient credentialv1.CredentialServiceClient) http.HandlerFunc {
+func SignInHandler(registrationService CredentialService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestLog := RequestLogger(r)
 		w.Header().Set("Content-Type", "application/json")
@@ -153,10 +137,11 @@ func SignInHandler(credentialClient credentialv1.CredentialServiceClient) http.H
 		}
 
 		//call SignIn funciton from credential service
-		grpcResponse, err := credentialClient.SignIn(r.Context(), &credentialv1.SignInRequest{
-			Email:    reqBody.Email,
-			Password: reqBody.Password,
-		})
+		grpcResponse, err := registrationService.SignIn(
+			r.Context(),
+			reqBody.Email,
+			reqBody.Password,
+		)
 
 		// if error is thrown, return error
 		if err != nil {
