@@ -18,10 +18,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func requestLogger(r *http.Request) *log.Logger {
-	return registration.RequestLogger(r)
-}
-
 func main() {
 	router := http.NewServeMux()
 	conn, err := grpc.NewClient("credential:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))

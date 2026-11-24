@@ -162,3 +162,21 @@ sequenceDiagram
     DB-->>RS: Return profile
     RS-->>FE: 200 OK with user profile
 ```
+
+
+temporal co 2 activity: dki tai khoan, otp signal
+
+gui 1 cai code toi email, bat signal block lai, cho otp. otp toi thi process tiep, insert db. otp value co the luwu trong temporal history luon
+dung ham ramdom cua temporal. hom nay voi ngay mai tap temporal container.. orchestrator nam o http server/
+
+
+GIAI THICH HE THONG LAM GI: DKI TAI KHOAN
+DI QUA NHUNG API: HE THONG HO TRO TAC VU NAO
+SYSTEM COMPONENTS: FLOW DI TU DAU DEN DAU
+DI QUA USE CASES: TU USE CASE DI QUA CAI CHART (NOI SIGN UP THOI)
+SAU DO DEMO QUA POSTMAN, CHUAN BI SAN REQUEST DATA
+DI QUA TECHNICAL, MO LOG RA CHUNG MINH DATA DI QUA NHUNG COMPONENT BANG DOCKER
+MO FILE PROTO CHO MN XEM DE BIET LA MINH DA DISGN NHUNG CAI PROTO NAO
+
+
+BUOI NGAY MAI NEN TRINH BAY DAU CHO DO BI AP LUC. DUNG QUAN TAM NGUOI KHAC. CHUNG MINH CHAY ON O LOCAL, FAULT TOLERANCE, SAN SANG DE DEPLOY LA DUOC. KHONG DUOC DE CO BUG
