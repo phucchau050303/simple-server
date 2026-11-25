@@ -30,7 +30,7 @@ func RegistrationWorkflow(ctx workflow.Context, input RegistrationInput) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,
 	}
-	actCtx := workflow.WithActivityOptions(ctx, ao)
+	ctx = workflow.WithActivityOptions(ctx, ao)
 
 	otpCode, err := generateOTPCode(ctx)
 	if err != nil || otpCode == "" {
@@ -72,7 +72,7 @@ func RegistrationWorkflow(ctx workflow.Context, input RegistrationInput) error {
 				if attempts >= 5 {
 					workflowErr = temporal.NewNonRetryableApplicationError(
 						"account locked due to too many failed attempts",
-						"account locked",
+						"AccountLocked",
 						nil,
 					)
 					done = true
@@ -83,5 +83,53 @@ func RegistrationWorkflow(ctx workflow.Context, input RegistrationInput) error {
 			verified = true
 
 		})
+
+		selector.AddReceive(resendChan, func(c workflow.ReceiveChannel, more bool) {
+			c.Receive(ctx, nil)
+
+			newOTPCode, genErr := generateOTPCode(ctx)
+			if genErr != nil {
+				workflowErr = genErr
+				done = true
+				return
+			}
+
+			otpCode = newOTPCode
+			otpExpiresAt = workflow.Now(ctx).Add(15 * time.Minute)
+			attempts = 0
+
+			sendErr := workflow.ExecuteActivity(ctx, a.SendOTPEmail, input.Email, otpCode).Get(ctx, nil)
+			if sendErr != nil {
+				workflowErr = sendErr
+				done = true
+				return
+			}
+
+			logger.Info("Resent new OTP", "email", input.Email)
+		})
+
+		selector.AddFuture(expiryTimer, func(f workflow.Future) {
+			timerErr := f.Get(ctx, nil)
+			if timerErr != nil {
+				workflowErr = timerErr
+				done = true
+				return
+			}
+
+			workflowErr = temporal.NewNonRetryableApplicationError(
+				"Registration expired after 24 hours",
+				"RegistrationExpired",
+				nil,
+			)
+			done = true
+		})
+
+		selector.Select(ctx)
 	}
+
+	if workflowErr != nil {
+		return workflowErr
+	}
+
+	return workflow.ExecuteActivity(ctx, a.CreateAccount, input.Email, input.Password).Get(ctx, nil)
 }
