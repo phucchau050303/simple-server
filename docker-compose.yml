@@ -10,6 +10,10 @@ services:
     environment:
       DB_HOST: db
       CONNECTION_STRING: ${CONNECTION_STRING}
+      TEMPORAL_ADDRESS: temporal:7233
+    depends_on:
+      - credential
+      - temporal
     develop:
       watch:
         # Sync Go source files so Air recompiles automatically
@@ -36,6 +40,9 @@ services:
       - .env
     environment:
       CONNECTION_STRING: ${CONNECTION_STRING}
+    depends_on:
+      db:
+        condition: service_healthy
     develop:
       watch:
         # Sync Go source files so Air recompiles automatically
@@ -63,11 +70,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 1m30s
-      timeout: 30s
+      interval: 5s
+      timeout: 5s
       retries: 5
     ports:
     - "5432:5432"
+
+  temporal:
+    image: temporalio/temporal:latest
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--ui-port", "8233"]
+    ports:
+      - "7233:7233"
+      - "8233:8233"
 
 volumes:
   postgres_data:
