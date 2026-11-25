@@ -57,7 +57,7 @@ func (s *service) SignUp(ctx context.Context, email string, password string) (*c
 		return &credentialv1.SignUpResponse{
 			IsValid: false,
 			Message: "Email and password cannot be null!",
-		}, fmt.Errorf("email and password cannot be null")
+		}, nil
 	}
 	if FormatCheck(password) == false {
 		return &credentialv1.SignUpResponse{

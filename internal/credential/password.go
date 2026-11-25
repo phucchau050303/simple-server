@@ -6,8 +6,6 @@ import (
 	"github.com/alexedwards/argon2id"
 )
 
-var hasUpper, hasSpecialCharacter, hasNum = false, false, false
-
 func Hash(password string) (string, error) {
 	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
 	if err != nil {
@@ -25,6 +23,7 @@ func Verify(password string, hashedPassword string) (bool, error) {
 }
 
 func FormatCheck(password string) bool {
+	var hasUpper, hasSpecialCharacter, hasNum = false, false, false
 	// match, err := regexp.MatchString(password, passwordRegex)
 	// if err != nil {
 	// 	return !match

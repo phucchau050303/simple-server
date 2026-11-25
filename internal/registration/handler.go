@@ -152,6 +152,7 @@ func SignInHandler(registrationService CredentialService) http.HandlerFunc {
 				"error": err.Error(),
 			}
 			json.NewEncoder(w).Encode(response)
+			return
 		}
 
 		//if response is invalid, return 401 unauthorised
